@@ -74,8 +74,8 @@ HEADER_COOKIE_RE = re.compile(r'__cfduid=([a-f0-9]{46})')
 BODY_COOKIE_RE = re.compile(r'document\.cookie="a=([a-f0-9]{32});path=/;";')
 
 class BTCEConnection:
-    def __init__(self, timeout=30):
-        self.conn = httplib.HTTPSConnection(btce_domain, timeout=timeout)
+    def __init__(self, timeout=30, strict=None):
+        self.conn = httplib.HTTPSConnection(btce_domain, timeout=timeout, strict=strict)
         self.cookie = None
 
     def close(self):
@@ -109,8 +109,16 @@ class BTCEConnection:
 
             headers.update({"Cookie": self.cookie})
 
-        self.conn.request("POST", url, params, headers)
-        response = self.conn.getresponse().read()
+        try:
+            self.conn.request("POST", url, params, headers)
+            response = self.conn.getresponse().read()
+        except:
+            import time
+            time.sleep(1)
+            self.conn.close()
+            self.conn.request("POST", url, params, headers)
+            response = self.conn.getresponse().read()
+
 
         return response
 
